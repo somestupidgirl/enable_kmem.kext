@@ -19,6 +19,18 @@ printf("[kmem.kext][-] Couldn't resolve required symbol `" #SYMBOL "'\n"); \
 static boolean_t *dev_kmem_mask_top_bit = NULL;
 static boolean_t *dev_kmem_enabled = NULL;
 
+static inline uintptr_t get_cr0(void)
+{
+    uintptr_t cr0;
+    __asm__ volatile("mov %%cr0, %0" : "=r" (cr0));
+    return(cr0);
+}
+
+static inline void set_cr0(uintptr_t value)
+{
+    __asm__ volatile("mov %0, %%cr0" : : "r" (value));
+}
+
 kern_return_t kmem_start(kmod_info_t *ki, void *d)
 {
     RESOLVE_KSYM_OR_DIE(dev_kmem_mask_top_bit, "_dev_kmem_mask_top_bit");
@@ -31,7 +43,7 @@ kern_return_t kmem_start(kmod_info_t *ki, void *d)
     *dev_kmem_mask_top_bit = TRUE;
     if (*dev_kmem_enabled) {
         printf("[kmem.kext][+] dev_kmem_enabled is set, using existing /dev/kmem device.\n");
-        return KERN_SUCCESS;
+        goto dev_kmem_exists;
     }
 
     if ((dev_kmem_devnode = devfs_make_node(makedev(3, 1), DEVFS_CHAR,
@@ -43,7 +55,11 @@ kern_return_t kmem_start(kmod_info_t *ki, void *d)
         printf("[kmem.kext][-] Failed to load /dev/kmem device.\n");
         return KERN_FAILURE;
     }
+    
+dev_kmem_exists:
 
+#define CR0_WP 0x00010000
+    set_cr0(get_cr0() & ~CR0_WP);
     return KERN_SUCCESS;
 }
 
