@@ -18,7 +18,7 @@ static struct segment_command_64 *find_segment_64(struct mach_header_64 *mh, con
 {
     struct load_command *lc;
     struct segment_command_64 *seg, *foundseg = NULL;
-    
+
     /* first load command begins straight after the mach header */
     lc = (struct load_command *)((uint64_t)mh + sizeof(struct mach_header_64));
     while ((uint64_t)lc < (uint64_t)mh + (uint64_t)mh->sizeofcmds) {
@@ -30,18 +30,18 @@ static struct segment_command_64 *find_segment_64(struct mach_header_64 *mh, con
                 break;
             }
         }
-        
+
         /* next load command */
         lc = (struct load_command *)((uint64_t)lc + (uint64_t)lc->cmdsize);
     }
-    
+
     return foundseg;
 }
 
 static struct load_command *find_load_command(struct mach_header_64 *mh, uint32_t cmd)
 {
     struct load_command *lc, *foundlc = NULL;
-    
+
     /* first load command begins straight after the mach header */
     lc = (struct load_command *)((uint64_t)mh + sizeof(struct mach_header_64));
     while ((uint64_t)lc < (uint64_t)mh + (uint64_t)mh->sizeofcmds) {
@@ -49,11 +49,11 @@ static struct load_command *find_load_command(struct mach_header_64 *mh, uint32_
             foundlc = (struct load_command *)lc;
             break;
         }
-        
+
         /* next load command*/
         lc = (struct load_command *)((uint64_t)lc + (uint64_t)lc->cmdsize);
     }
-    
+
     return foundlc;
 }
 
@@ -71,14 +71,14 @@ void *find_symbol(struct mach_header_64 *mh, const char *name)
         printf("%s: magic number doesn't match - 0x%x\n", __func__, mh->magic);
         return NULL;
     }
-    
+
     /* Find the __LINKEDIT segment and LC_SYMTAB command */
     linkedit = find_segment_64(mh, SEG_LINKEDIT);
     if (!linkedit) {
         printf("%s: couldn't find __LINKEDIT\n", __func__);
         return NULL;
     }
-    
+
     lc_symtab = (struct symtab_command *)find_load_command(mh, LC_SYMTAB);
     if (!lc_symtab) {
         printf("%s: couldn't find LC_SYMTAB\n", __func__);
@@ -95,7 +95,7 @@ void *find_symbol(struct mach_header_64 *mh, const char *name)
             addr = (void *)symtab[i].n_value;
         }
     }
-    
+
     return addr;
 }
 
